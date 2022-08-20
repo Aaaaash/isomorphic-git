@@ -98,8 +98,8 @@ export class GitWalkerRepo {
   async mode(entry) {
     if (entry._mode === false) {
       const map = await this.mapPromise
-      const { mode } = map.get(entry._fullpath)
-      entry._mode = normalizeMode(parseInt(mode, 8))
+      const en = map.get(entry._fullpath)
+      entry._mode = normalizeMode(parseInt(en ? en.mode : '000000', 8))
     }
     return entry._mode
   }
@@ -111,7 +111,7 @@ export class GitWalkerRepo {
       const map = await this.mapPromise
       const { fs, cache, gitdir } = this
       const obj = map.get(entry._fullpath)
-      const oid = obj.oid
+      const oid = obj ? obj.oid : '0000000000000000000000000000000000000000-'
       const { type, object } = await readObject({ fs, cache, gitdir, oid })
       if (type !== 'blob') {
         entry._content = undefined
@@ -126,7 +126,7 @@ export class GitWalkerRepo {
     if (entry._oid === false) {
       const map = await this.mapPromise
       const obj = map.get(entry._fullpath)
-      entry._oid = obj.oid
+      entry._oid = obj ? obj.oid : '0000000000000000000000000000000000000000-'
     }
     return entry._oid
   }

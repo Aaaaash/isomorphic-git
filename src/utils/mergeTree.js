@@ -221,7 +221,7 @@ async function modified(entry, base) {
  * @param {MergeDriverCallback} [args.mergeDriver]
  *
  */
-async function mergeBlobs({
+export async function mergeBlobs({
   fs,
   gitdir,
   path,

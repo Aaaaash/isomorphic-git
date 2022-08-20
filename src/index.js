@@ -39,6 +39,7 @@ import { listServerRefs } from './api/listServerRefs.js'
 import { listTags } from './api/listTags.js'
 import { log } from './api/log.js'
 import { merge } from './api/merge.js'
+import { mergeWithConflict } from './api/mergeWithConflict.js'
 import { packObjects } from './api/packObjects.js'
 import { pull } from './api/pull.js'
 import { push } from './api/push.js'
@@ -137,6 +138,7 @@ export {
   writeRef,
   writeTag,
   writeTree,
+  mergeWithConflict,
 }
 
 // default export
@@ -208,4 +210,5 @@ export default {
   writeRef,
   writeTag,
   writeTree,
+  mergeWithConflict,
 }

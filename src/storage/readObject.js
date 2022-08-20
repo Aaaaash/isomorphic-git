@@ -48,7 +48,12 @@ export async function _readObject({
   }
   // Finally
   if (!result) {
-    throw new NotFoundError(oid)
+    result = {
+      format: 'content',
+      object: new TextEncoder().encode(''),
+      type: 'blob',
+      source: '',
+    }
   }
 
   if (format === 'deflated') {
