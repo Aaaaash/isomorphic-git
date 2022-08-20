@@ -59,6 +59,7 @@ import { writeUploadPackRequest } from '../wire/writeUploadPackRequest.js'
  * @param {Object<string, string>} [args.headers]
  * @param {boolean} [args.prune]
  * @param {boolean} [args.pruneTags]
+ * @param {string} [args.filter]
  *
  * @returns {Promise<FetchResult>}
  * @see FetchResult
@@ -87,6 +88,7 @@ export async function _fetch({
   headers = {},
   prune = false,
   pruneTags = false,
+  filter = null,
 }) {
   const ref = _ref || (await _currentBranch({ fs, gitdir, test: true }))
   const config = await GitConfigManager.get({ fs, gitdir })
@@ -175,6 +177,7 @@ export async function _fetch({
       // canonical git it turns out is NOT.
       'ofs-delta',
       `agent=${pkg.agent}`,
+      `filter=${filter}`,
     ]
   )
   if (relative) capabilities.push('deepen-relative')

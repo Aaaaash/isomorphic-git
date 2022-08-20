@@ -31,6 +31,7 @@ import { GitConfigManager } from '../managers/GitConfigManager.js'
  * @param {string[]} args.exclude
  * @param {boolean} args.relative
  * @param {Object<string, string>} args.headers
+ * @param {string} args.filter
  *
  * @returns {Promise<void>} Resolves successfully when clone completes
  *
@@ -58,6 +59,7 @@ export async function _clone({
   noCheckout,
   noTags,
   headers,
+  filter,
 }) {
   try {
     await _init({ fs, gitdir })
@@ -87,6 +89,7 @@ export async function _clone({
       singleBranch,
       headers,
       tags: !noTags,
+      filter,
     })
     if (fetchHead === null) return
     ref = ref || defaultBranch

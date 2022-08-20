@@ -32,6 +32,7 @@ import { join } from '../utils/join.js'
  * @param {boolean} [args.relative = false] - Changes the meaning of `depth` to be measured from the current shallow depth rather than from the branch tip.
  * @param {Object<string, string>} [args.headers = {}] - Additional headers to include in HTTP requests, similar to git's `extraHeader` config
  * @param {object} [args.cache] - a [cache](cache.md) object
+ * @param {string} [args.filter]
  *
  * @returns {Promise<void>} Resolves successfully when clone completes
  *
@@ -71,6 +72,7 @@ export async function clone({
   noTags = false,
   headers = {},
   cache = {},
+  filter = null,
 }) {
   try {
     assertParameter('fs', fs)
@@ -104,6 +106,7 @@ export async function clone({
       noCheckout,
       noTags,
       headers,
+      filter,
     })
   } catch (err) {
     err.caller = 'git.clone'
