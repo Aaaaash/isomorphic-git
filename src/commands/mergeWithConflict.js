@@ -6,6 +6,7 @@ import { _findMergeBase } from '../commands/findMergeBase.js'
 import { MergeNotSupportedError } from '../errors/MergeNotSupportedError.js'
 import { GitRefManager } from '../managers/GitRefManager.js'
 import { mergeTreeWitchConflict } from '../utils/mergeTreeWithConflict.js'
+import { abbreviateRef } from '../utils/abbreviateRef.js'
 
 export async function _mergeWithConflict({
   fs,
@@ -72,6 +73,9 @@ export async function _mergeWithConflict({
     baseOid,
     files,
     mergeDriver,
+    ourName: abbreviateRef(ours),
+    baseName: 'base',
+    theirName: abbreviateRef(theirs),
   })
   return result
 }
