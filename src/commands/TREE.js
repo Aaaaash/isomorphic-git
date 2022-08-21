@@ -11,9 +11,13 @@ import { GitWalkSymbol } from '../utils/symbols.js'
  */
 export function TREE({ ref = 'HEAD' } = {}) {
   const o = Object.create(null)
+  let value = null
   Object.defineProperty(o, GitWalkSymbol, {
     value: function({ fs, gitdir, cache }) {
-      return new GitWalkerRepo({ fs, gitdir, ref, cache })
+      if (!value) {
+        value = new GitWalkerRepo({ fs, gitdir, ref, cache })
+      }
+      return value
     },
   })
   Object.freeze(o)
