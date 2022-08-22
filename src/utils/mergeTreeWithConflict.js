@@ -7,6 +7,7 @@ import { _readObject } from '../storage/readObject.js'
 import { join } from './join.js'
 import { mergeBlobs } from './mergeTree.js'
 import { GitWalkSymbol } from './symbols.js'
+import { _walk } from '../commands/walk.js'
 
 export async function mergeTreeWitchConflict({
   fs,
@@ -26,17 +27,17 @@ export async function mergeTreeWitchConflict({
   const baseTree = TREE({ ref: baseOid })
   const theirTree = TREE({ ref: theirOid })
 
+  await _walk({
+    fs,
+    cache,
+    dir,
+    gitdir,
+    trees: [ourTree, baseTree, theirTree],
+  })
+
   const ourWalker = ourTree[GitWalkSymbol]({ fs, dir, gitdir, cache })
   const baseWalker = baseTree[GitWalkSymbol]({ fs, dir, gitdir, cache })
   const theirWalker = theirTree[GitWalkSymbol]({ fs, dir, gitdir, cache })
-
-  const baseRootEntry = new baseWalker.ConstructEntry('.')
-  const ourRootEntry = new ourWalker.ConstructEntry('.')
-  const theirRootEntry = new theirWalker.ConstructEntry('.')
-
-  await ourWalker.readdir(ourRootEntry)
-  await baseWalker.readdir(baseRootEntry)
-  await theirWalker.readdir(theirRootEntry)
 
   const entries = files.map(filepath => {
     const ours = new ourWalker.ConstructEntry(filepath)
@@ -61,17 +62,19 @@ export async function mergeTreeWitchConflict({
         theirName,
         mergeDriver,
       })
-      const obj = await _readObject({
-        fs,
-        cache,
-        gitdir,
-        oid: result.mergeResult.oid,
-        format: 'content',
-      })
-      mergeResults.push({
-        ...result,
-        content: new TextDecoder().decode(obj.object),
-      })
+      if (!result.cleanMerge) {
+        const obj = await _readObject({
+          fs,
+          cache,
+          gitdir,
+          oid: result.mergeResult.oid,
+          format: 'content',
+        })
+        mergeResults.push({
+          ...result,
+          content: new TextDecoder().decode(obj.object),
+        })
+      }
     } catch (err) {}
   }
   return mergeResults
