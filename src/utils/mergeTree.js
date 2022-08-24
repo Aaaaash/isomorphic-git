@@ -29,6 +29,7 @@ import { mergeFile } from './mergeFile.js'
  * @param {boolean} [args.dryRun=false]
  * @param {boolean} [args.abortOnConflict=false]
  * @param {MergeDriverCallback} [args.mergeDriver]
+ * @param {string[]} [args.conflictFiles] - a conflict files list
  *
  * @returns {Promise<string>} - The SHA-1 object id of the merged tree
  *
@@ -47,6 +48,7 @@ export async function mergeTree({
   dryRun = false,
   abortOnConflict = true,
   mergeDriver,
+  conflictFiles = [],
 }) {
   const ourTree = TREE({ ref: ourOid })
   const baseTree = TREE({ ref: baseOid })
@@ -97,13 +99,20 @@ export async function mergeTree({
             : undefined
         }
         case 'true-true': {
+          if (!base && !conflictFiles.includes(filepath)) {
+            return {
+              mode: await theirs.mode(),
+              path,
+              oid: await theirs.oid(),
+              type: await theirs.type(),
+            }
+          }
+
           // Modifications
           if (
             ours &&
-            base &&
             theirs &&
             (await ours.type()) === 'blob' &&
-            (await base.type()) === 'blob' &&
             (await theirs.type()) === 'blob'
           ) {
             return mergeBlobs({
@@ -166,11 +175,13 @@ export async function mergeTree({
         gitdir,
         trees: [TREE({ ref: results.oid })],
         map: async function(filepath, [entry]) {
-          const path = `${dir}/${filepath}`
-          if ((await entry.type()) === 'blob') {
-            const mode = await entry.mode()
-            const content = new TextDecoder().decode(await entry.content())
-            await fs.write(path, content, { mode })
+          if (conflictFiles.includes(filepath)) {
+            const path = `${dir}/${filepath}`
+            if ((await entry.type()) === 'blob') {
+              const mode = await entry.mode()
+              const content = new TextDecoder().decode(await entry.content())
+              await fs.write(path, content, { mode })
+            }
           }
           return true
         },

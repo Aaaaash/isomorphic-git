@@ -106,6 +106,7 @@ import { normalizeCommitterObject } from '../utils/normalizeCommitterObject.js'
  * @param {string} [args.signingKey] - passed to [commit](commit.md) when creating a merge commit
  * @param {object} [args.cache] - a [cache](cache.md) object
  * @param {MergeDriverCallback} [args.mergeDriver] - a [merge driver](mergeDriver.md) implementation
+ * @param {string[]} [args.conflictFiles] - a conflict files list
  *
  * @returns {Promise<MergeResult>} Resolves to a description of the merge operation
  * @see MergeResult
@@ -138,6 +139,7 @@ export async function merge({
   signingKey,
   cache = {},
   mergeDriver,
+  conflictFiles = [],
 }) {
   try {
     assertParameter('fs', _fs)
@@ -179,6 +181,7 @@ export async function merge({
       signingKey,
       onSign,
       mergeDriver,
+      conflictFiles,
     })
   } catch (err) {
     err.caller = 'git.merge'

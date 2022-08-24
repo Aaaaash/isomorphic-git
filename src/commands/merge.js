@@ -48,6 +48,7 @@ import { mergeTree } from '../utils/mergeTree.js'
  * @param {string} [args.signingKey]
  * @param {SignCallback} [args.onSign] - a PGP signing implementation
  * @param {MergeDriverCallback} [args.mergeDriver]
+ * @param {string[]} [args.conflictFiles] - a conflict files list
  *
  * @returns {Promise<MergeResult>} Resolves to a description of the merge operation
  *
@@ -70,6 +71,7 @@ export async function _merge({
   signingKey,
   onSign,
   mergeDriver,
+  conflictFiles,
 }) {
   if (ours === undefined) {
     ours = await _currentBranch({ fs, gitdir, fullname: true })
@@ -140,6 +142,7 @@ export async function _merge({
       dryRun,
       abortOnConflict,
       mergeDriver,
+      conflictFiles,
     })
     if (!message) {
       message = `Merge branch '${abbreviateRef(theirs)}' into ${abbreviateRef(
