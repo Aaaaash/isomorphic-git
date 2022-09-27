@@ -99,15 +99,6 @@ export async function mergeTree({
             : undefined
         }
         case 'true-true': {
-          if (!base && !conflictFiles.includes(filepath)) {
-            return {
-              mode: await theirs.mode(),
-              path,
-              oid: await theirs.oid(),
-              type: await theirs.type(),
-            }
-          }
-
           // Modifications
           if (
             ours &&
@@ -128,7 +119,9 @@ export async function mergeTree({
               mergeDriver,
             }).then(r => {
               cleanMerge = cleanMerge && r.cleanMerge
-              unmergedFiles.push(filepath)
+              if (!r.cleanMerge) {
+                unmergedFiles.push(filepath)
+              }
               return r.mergeResult
             })
           }
@@ -175,13 +168,11 @@ export async function mergeTree({
         gitdir,
         trees: [TREE({ ref: results.oid })],
         map: async function(filepath, [entry]) {
-          if (conflictFiles.includes(filepath)) {
-            const path = `${dir}/${filepath}`
-            if ((await entry.type()) === 'blob') {
-              const mode = await entry.mode()
-              const content = new TextDecoder().decode(await entry.content())
-              await fs.write(path, content, { mode })
-            }
+          const path = `${dir}/${filepath}`
+          if ((await entry.type()) === 'blob') {
+            const mode = await entry.mode()
+            const content = new TextDecoder().decode(await entry.content())
+            await fs.write(path, content, { mode })
           }
           return true
         },

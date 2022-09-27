@@ -34,6 +34,7 @@ Merge two branches
 | signingKey               | string                               | passed to [commit](commit.md) when creating a merge commit                                                                                                    |
 | cache                    | object                               | a [cache](cache.md) object                                                                                                                                    |
 | mergeDriver              | MergeDriverCallback                  | a [merge driver](mergeDriver.md) implementation                                                                                                               |
+| conflictFiles            | Array\<string\>                      | a conflict files list                                                                                                                                         |
 | return                   | Promise\<MergeResult\>               | Resolves to a description of the merge operation                                                                                                              |
 
 Returns an object with a schema like this:
