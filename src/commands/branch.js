@@ -14,7 +14,9 @@ import { GitRefManager } from '../managers/GitRefManager.js'
  * @param {import('../models/FileSystem.js').FileSystem} args.fs
  * @param {string} args.gitdir
  * @param {string} args.ref
+ * @param {string} [args.object = 'HEAD']
  * @param {boolean} [args.checkout = false]
+ * @param {boolean} [args.force = false]
  *
  * @returns {Promise<void>} Resolves successfully when filesystem operations are complete
  *
@@ -23,22 +25,31 @@ import { GitRefManager } from '../managers/GitRefManager.js'
  * console.log('done')
  *
  */
-export async function _branch({ fs, gitdir, ref, checkout = false }) {
+export async function _branch({
+  fs,
+  gitdir,
+  ref,
+  object,
+  checkout = false,
+  force = false,
+}) {
   if (ref !== cleanGitRef.clean(ref)) {
     throw new InvalidRefNameError(ref, cleanGitRef.clean(ref))
   }
 
   const fullref = `refs/heads/${ref}`
 
-  const exist = await GitRefManager.exists({ fs, gitdir, ref: fullref })
-  if (exist) {
-    throw new AlreadyExistsError('branch', ref, false)
+  if (!force) {
+    const exist = await GitRefManager.exists({ fs, gitdir, ref: fullref })
+    if (exist) {
+      throw new AlreadyExistsError('branch', ref, false)
+    }
   }
 
   // Get current HEAD tree oid
   let oid
   try {
-    oid = await GitRefManager.resolve({ fs, gitdir, ref: 'HEAD' })
+    oid = await GitRefManager.resolve({ fs, gitdir, ref: object || 'HEAD' })
   } catch (e) {
     // Probably an empty repo
   }
