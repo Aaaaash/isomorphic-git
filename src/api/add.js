@@ -55,22 +55,22 @@ export async function add({
 }
 
 async function addToIndex({ dir, gitdir, fs, filepath, index, force }) {
-  // TODO: Should ignore UNLESS it's already in the index.
   filepath = Array.isArray(filepath) ? filepath : [filepath]
   const promises = filepath.map(async currentFilepath => {
-    if (!force) {
-      const ignored = await GitIgnoreManager.isIgnored({
-        fs,
-        dir,
-        gitdir,
-        filepath: currentFilepath,
-      })
-      if (ignored) return
-    }
     const stats = await fs.lstat(join(dir, currentFilepath))
     if (!stats) throw new NotFoundError(currentFilepath)
 
     if (stats.isDirectory()) {
+      if (!force) {
+        const ignored = await GitIgnoreManager.isIgnored({
+          fs,
+          dir,
+          gitdir,
+          filepath: currentFilepath,
+        })
+        if (ignored) return
+      }
+
       const children = await fs.readdir(join(dir, currentFilepath))
       const promises = children.map(child =>
         addToIndex({
@@ -89,6 +89,19 @@ async function addToIndex({ dir, gitdir, fs, filepath, index, force }) {
         : await fs.read(join(dir, currentFilepath))
       if (object === null) throw new NotFoundError(currentFilepath)
       const oid = await _writeObject({ fs, gitdir, type: 'blob', object })
+      if (!force) {
+        // if file already in the index, it should not ignored
+        const ignored = oid
+          ? false
+          : await GitIgnoreManager.isIgnored({
+              fs,
+              dir,
+              gitdir,
+              filepath: currentFilepath,
+            })
+        if (ignored) return
+      }
+
       index.insert({ filepath: currentFilepath, stats, oid })
     }
   })
