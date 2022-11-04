@@ -34,6 +34,7 @@ import { mergeTree } from '../utils/mergeTree.js'
  * @param {boolean} args.dryRun
  * @param {boolean} args.noUpdateBranch
  * @param {boolean} args.abortOnConflict
+ * @param {string} args.mergeBase
  * @param {string} [args.message]
  * @param {Object} args.author
  * @param {string} args.author.name
@@ -70,6 +71,7 @@ export async function _merge({
   committer,
   signingKey,
   onSign,
+  mergeBase,
   mergeDriver,
   conflictFiles,
 }) {
@@ -103,7 +105,7 @@ export async function _merge({
     gitdir,
     oids: [ourOid, theirOid],
   })
-  if (baseOids.length !== 1) {
+  if (baseOids.length !== 1 && !baseOids.includes(mergeBase)) {
     throw new MergeNotSupportedError()
   }
   const baseOid = baseOids[0]

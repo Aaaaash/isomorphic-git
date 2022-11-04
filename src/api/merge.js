@@ -87,6 +87,7 @@ import { normalizeCommitterObject } from '../utils/normalizeCommitterObject.js'
  * @param {string} [args.gitdir=join(dir,'.git')] - [required] The [git directory](dir-vs-gitdir.md) path
  * @param {string} [args.ours] - The branch receiving the merge. If undefined, defaults to the current branch.
  * @param {string} args.theirs - The branch to be merged
+ * @param {string} args.mergeBase - The mergebase
  * @param {boolean} [args.fastForward = true] - If false, create a merge commit in all cases.
  * @param {boolean} [args.fastForwardOnly = false] - If true, then non-fast-forward merges will throw an Error instead of performing a merge.
  * @param {boolean} [args.dryRun = false] - If true, simulates a merge so you can test whether it would succeed.
@@ -134,6 +135,7 @@ export async function merge({
   noUpdateBranch = false,
   abortOnConflict = true,
   message,
+  mergeBase,
   author: _author,
   committer: _committer,
   signingKey,
@@ -178,6 +180,7 @@ export async function merge({
       message,
       author,
       committer,
+      mergeBase,
       signingKey,
       onSign,
       mergeDriver,
