@@ -6,7 +6,10 @@ import { _walk } from '../commands/walk.js'
 import { MergeConflictError } from '../errors/MergeConflictError.js'
 import { MergeNotSupportedError } from '../errors/MergeNotSupportedError.js'
 import { GitTree } from '../models/GitTree.js'
-import { _writeObject as writeObject } from '../storage/writeObject.js'
+import {
+  _writeObject as writeObject,
+  _writeObject,
+} from '../storage/writeObject.js'
 
 import { basename } from './basename.js'
 import { join } from './join.js'
@@ -99,34 +102,59 @@ export async function mergeTree({
             : undefined
         }
         case 'true-true': {
-          // Modifications
-          if (
-            ours &&
-            theirs &&
-            (await ours.type()) === 'blob' &&
-            (await theirs.type()) === 'blob'
-          ) {
-            return mergeBlobs({
+          const oursType = await ours.type()
+          const theirsType = await theirs.type()
+
+          if (oursType !== 'blob' && theirsType !== 'blob') {
+            const oursEntry = {
+              oid: await ours.oid(),
+              mode: await ours.mode(),
+              type: oursType,
+              path,
+            }
+
+            const theirsEntry = {
+              oid: await theirs.oid(),
+              mode: await theirs.mode(),
+              type: theirsType,
+              path,
+            }
+
+            const tree = new GitTree([oursEntry, theirsEntry])
+            const object = tree.toObject()
+            const oid = await _writeObject({
               fs,
               gitdir,
-              path,
-              ours,
-              base,
-              theirs,
-              ourName,
-              baseName,
-              theirName,
-              mergeDriver,
-            }).then(r => {
-              cleanMerge = cleanMerge && r.cleanMerge
-              if (!r.cleanMerge) {
-                unmergedFiles.push(filepath)
-              }
-              return r.mergeResult
+              type: 'tree',
+              object,
+              dryRun,
             })
+            return {
+              mode: await ours.mode(),
+              path,
+              oid,
+              type: 'tree',
+            }
           }
-          // all other types of conflicts fail
-          throw new MergeNotSupportedError()
+
+          return mergeBlobs({
+            fs,
+            gitdir,
+            path,
+            ours,
+            base,
+            theirs,
+            ourName,
+            baseName,
+            theirName,
+            mergeDriver,
+          }).then(r => {
+            cleanMerge = cleanMerge && r.cleanMerge
+            if (!r.cleanMerge) {
+              unmergedFiles.push(filepath)
+            }
+            return r.mergeResult
+          })
         }
       }
     },
@@ -237,12 +265,50 @@ export async function mergeBlobs({
   mergeDriver = mergeFile,
 }) {
   const type = 'blob'
+
+  // not theirs but have base and ours
+  if (!theirs && base && ours) {
+    return {
+      cleanMerge: true,
+      mergeResult: { mode: await ours.mode(), oid: await ours.oid(), type },
+    }
+  }
+
+  // not ours but have base and theirs
+  if (!ours && base && theirs) {
+    return {
+      cleanMerge: true,
+      mergeResult: { mode: await theirs.mode(), oid: await theirs.oid(), type },
+    }
+  }
+
   // Compute the new mode.
   // Since there are ONLY two valid blob modes ('100755' and '100644') it boils down to this
   const mode =
-    (await base.mode()) === (await ours.mode())
+    base && (await base.mode()) === (await ours.mode())
       ? await theirs.mode()
       : await ours.mode()
+
+  // not base but have ours and theirs
+  if (!base && theirs && ours) {
+    const ourContent = Buffer.from(await ours.content()).toString('utf8')
+    const theirContent = Buffer.from(await theirs.content()).toString('utf8')
+    const { mergedText, cleanMerge } = await mergeDriver({
+      branches: [baseName, ourName, theirName],
+      contents: ['', ourContent, theirContent],
+      path,
+    })
+    const oid = await _writeObject({
+      fs,
+      gitdir,
+      type: 'blob',
+      object: Buffer.from(mergedText, 'utf8'),
+      dryRun,
+    })
+
+    return { cleanMerge, mergeResult: { mode, path, oid, type } }
+  }
+
   // The trivial case: nothing to merge except maybe mode
   if ((await ours.oid()) === (await theirs.oid())) {
     return {
